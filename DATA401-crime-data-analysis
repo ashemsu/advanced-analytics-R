@@ -1,0 +1,63 @@
+## Adefoluke Shemsu
+## Week 5 Assignment
+
+setwd("~/Documents/Education/Penn/Classes/DATA 401/Week 5") # Setting directory.
+
+library(tidyverse) # Establishing libraries.
+
+# Import Clery crime log data from UOregon and examine the variables.
+
+clerylog <- read.csv("clerylog.csv", header = TRUE, sep=",")
+
+head(clerylog)
+
+ogclerylog <- clerylog # Default set.
+
+# Problem 1: Clean up classifcations in the nature variable. 
+# Remove the level of offenses (ie. the numbers 1, 2)
+
+clerylog$Nature <- as.factor(clerylog$Nature) # Turning 'Nature' into a factor to make it easier to remove #s.
+
+grep("[12]", clerylog$Nature, value = TRUE) # Locating all offense levels (1s and 2s).
+
+clerylog$Nature <- gsub("[1-3]", "", clerylog$Nature) # Removing levels.
+
+# Problem 2: 
+
+# A. Create a dummy variable that indicates if each row is a theft or not. 
+
+clerylog <- mutate(clerylog,
+                       Theft = grepl("[T][h][e][f][t]", clerylog$Nature))
+
+# B. Create a dummy variable that indicates if each row is a DUI.
+
+#First, I noticed a typo in the DUI data points (extra 'I' in 'DUI'), so I want to clean that up first.
+
+clerylog$Nature <- gsub("[D][U][I][I]", "DUI", clerylog$Nature) # Removing typo.
+
+clerylog <- mutate(clerylog, # Adding DUI dummy variable.
+                   DUI = grepl("[D][U][I]", clerylog$Nature))
+
+# C. Create a dummy variable that indicates if each row is a drug offense.
+
+clerylog <- mutate(clerylog, # Adding drug offense dummy variable.
+                   Drug.Offense = grepl("[D][r][u][g]", clerylog$Nature))
+
+# Problem  3: Use gregexpr() to  find observations that are associated with either heroin, marijuana, or meth.
+
+gregexpr("[M][a][r][i][j][u][a][n][a]", clerylog$Nature) # Finding observations that match with 'Marijuana'.
+
+# Problem 4: Create a new column with JUST the date (or date range) the crime occurred.
+
+clerylog$Date.Time.Occurred <- as.factor(clerylog$Date.Time.Occurred) 
+
+# Converting to factor to make it easier to remove. (Can't make numeric due to a few character values)
+
+# Creating new column.
+
+# First, cleaning column a bit more.
+
+clerylog$Date.Time.Occurred <- gsub("[:]", "", clerylog$Date.Time.Occurred) # Removing colon to keep clean 4 digit times.
+
+clerylog <- mutate(clerylog, # Removing 4 and 3 digit time variables from dates/date ranges.
+                    Date.Occurred = gsub(("[0-9]{4}|[0-9]{3}"), "", clerylog$Date.Time.Occurred))
