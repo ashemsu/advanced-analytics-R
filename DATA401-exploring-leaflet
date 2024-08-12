@@ -1,0 +1,87 @@
+## Adefoluke Shemsu
+## Week 1 Assignment
+
+# Assignment: Using the leaflet package, recreate the map featured in the image "place_matters_example_map.png" that 
+# can be found in the Week 1 HW folder. Be sure to alter the aesthetics of the map to match the example image 
+# as closely as you can. 
+
+# First, I'll need to set my working directory and ensure I have the correct packages installed.
+
+setwd("~/Documents/Education/Penn/Classes/DATA 401/Week 1")
+
+library(leaflet) # Disclaimer: For these, I found out in 310 that keeping 'install.packages' function breaks rmd knit process.
+library(rgdal)
+library(tidyverse)
+library(ggmap)
+
+
+leaflet()%>% # Pulling map on where we will be plugging adding contextual geospacial data.
+  addTiles()
+
+leaflet()%>% # Drilling down to city location.
+  addTiles()%>% 
+  setView(lng = -75.1624776, lat = 39.9562897, zoom = 12)%>%
+  addMarkers(lat = 39.9562897, lng = -75.1624776, popup = "Philadelphia, PA")
+
+# Next, we'll need to pull crime data associated with this area.
+
+crimestats <- read.csv("place_data.csv")
+philly.zip <- readOGR("Zipcodes_Poly", layer = "Zipcodes_Poly", encoding = "UTF-8")
+
+# Merging data with the shape file.
+
+philly.zip@data <- data.frame(philly.zip@data, 
+                              crimestats[match(philly.zip@data$CODE, 
+                                               crimestats$CODE),])
+
+# Adding a new variable to classify risk levels.
+
+philly.zip@data$rank[zipcodes@data$Risk <= 24] <- 1
+philly.zip@data$rank[24 < philly.zip@data$Risk & philly.zip@data$Risk <= 49] <- 2
+philly.zip@data$rank[49 < philly.zip@data$Risk & philly.zip@data$Risk <= 74] <- 3
+philly.zip@data$rank[74 < philly.zip@data$Risk] <- 4
+philly.zip@data$rank[is.na(philly.zip@data$Risk)] <- 0
+
+# Creating popup object.
+
+phil.popup <- paste("<strong>Zip Code </strong>", 
+                    philly.zip@data$CODE, "<br>",
+                    "<br>",
+                    "<strong>Risk Index: </strong>", 
+                    philly.zip@data$Risk,"%","<br>",
+                    "<strong>Poverty: </strong>", 
+                    philly.zip@data$Poverty,"%","<br>",
+                    "<strong>Education: </strong>", 
+                    philly.zip@data$Education,"%","<br>",
+                    "<strong>Unemployment: </strong>", 
+                    philly.zip@data$Unemployment,"%","<br>",
+                    "<strong>Crime: </strong>", 
+                    philly.zip@data$Crime,"%","<br>",
+                    "<strong>ACEs: </strong>", 
+                    philly.zip@data$ACEs,"%","<br>")
+
+# Selecting color pallete for the map. 
+
+map.colors <- colorFactor(c("#FFFFFF", 
+                            "#FFDB97",
+                            "#FF984E",
+                            "#F05051",
+                            "#D12F2E"),
+                          philly.zip@data$rank)
+
+# Mapping layout and creating render function for the server.
+
+leaflet(philly.zip)%>% 
+  addProviderTiles("CartoDB.Positron")%>%
+  addPolygons(stroke = TRUE,
+              color="#FFFFFF",
+              smoothFactor = 0.2, 
+              fillOpacity = .8,
+              fillColor = ~map.colors(rank),
+              weight = 1, 
+              popup = phil.popup)%>%
+  addLegend("bottomright", 
+            colors = c("#FFFFFF", "#FFDB97","#FF984E","#F05051","#D12F2E"),
+            labels = c("No data", "0-24","25-49","50-74","75-98"),  
+            title = "Risk: Lowest to Highest",
+            opacity = 1)
