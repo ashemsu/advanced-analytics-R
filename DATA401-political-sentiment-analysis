@@ -1,0 +1,193 @@
+## Adefoluke Shemsu
+## Week 6 Assignment
+
+setwd("~/Documents/Education/Penn/Classes/DATA 401/Week 6") # Setting directory.
+
+library(tm)
+library(slam)
+library(pacman) # Libraries.
+library(SnowballC)
+library(tidyverse)
+library(wordcloud)
+library(stringr)
+
+# Problem 1
+
+# Create a word cloud with the ANES 2016 open ended question about what respondents 
+# LIKE about Donald Trump. 
+
+trumplikes <- read.csv("redacted_trump_2016.csv") # Pulling likes into a dataframe.
+
+# Organizing data.
+
+t.likes <- Corpus(VectorSource(trumplikes$V161075...PRE..What.is.it.that.R.likes.about.Republican.Pres.cand))
+
+t.likesdocmatrix <- TermDocumentMatrix(t.likes) 
+
+t.likesmatrix <- as.matrix(t.likesdocmatrix)
+
+t.likesmatrix <- sort(rowSums(t.likesmatrix), decreasing = TRUE)
+
+t.likes.df <- data.frame(word = names(t.likesmatrix), freq = t.likesmatrix)
+
+# Cleaning data.
+
+t.likes <- tm_map(t.likes, removeWords, c("change", "think", "like", stopwords('english')))
+
+t.likes <- tm_map(t.likes, removePunctuation)
+
+t.likesdocmatrix <- TermDocumentMatrix(t.likes)
+
+t.likesmatrix <- as.matrix(t.likesdocmatrix)
+
+t.likesmatrix <- sort(rowSums(t.likesmatrix), decreasing = TRUE)
+
+t.likes.df <- data.frame(word = names(t.likesmatrix), freq = t.likesmatrix)
+
+# Creating cloud.
+
+color <- brewer.pal(6, "Dark2")
+
+wordcloud(t.likes.df$word, freq = t.likes.df$freq, max.words = 100, 
+          random.order = FALSE, colors = color)
+
+# Problem 2
+
+# Create a word cloud with the ANES 2016 open ended question about what respondents 
+# DISLIKE about Donald Trump.
+
+trumpdislikes <- read.csv("redacted_trump_2016_dislikes.csv") # Pulling dislikes into a dataframe.
+
+# Organizing data.
+
+t.dislikes <- Corpus(VectorSource(trumpdislikes$V161078...PRE..What.is.it.that.R.dislikes.about.Republican.Pres.cand))
+
+t.dislikesdocmatrix <- TermDocumentMatrix(t.dislikes) 
+
+t.dislikesmatrix <- as.matrix(t.dislikesdocmatrix)
+
+t.dislikesmatrix <- sort(rowSums(t.dislikesmatrix), decreasing = TRUE)
+
+t.dislikes.df <- data.frame(word = names(t.dislikesmatrix), freq = t.dislikesmatrix)
+
+# Cleaning data.
+
+t.dislikes <- tm_map(t.dislikes, removeWords, c("his", stopwords('english')))
+
+t.dislikes <- tm_map(t.dislikes, removePunctuation)
+
+t.dislikesdocmatrix <- TermDocumentMatrix(t.dislikes)
+
+t.dislikesmatrix <- as.matrix(t.dislikesdocmatrix)
+
+t.dislikesmatrix <- sort(rowSums(t.dislikesmatrix), decreasing = TRUE)
+
+t.dislikes.df <- data.frame(word = names(t.dislikesmatrix), freq = t.dislikesmatrix)
+
+# Creating cloud.
+
+wordcloud(t.dislikes.df$word, freq = t.dislikes.df$freq, max.words = 100, 
+          random.order = FALSE, colors = color)
+
+# Problem 3
+
+# Create a word cloud with the ANES 2016 open ended question about what respondents 
+# LIKE about Hilary Clinton. 
+
+clintonlikes <- read.csv("redacted_2016_clinton_likes.csv") # Pulling clinton likes into a dataframe.
+
+c.likes <- Corpus(VectorSource(clintonlikes$V161069...PRE...What.is.it.that.R.likes.about.Democratic.Pres.cand))
+
+c.likesdocmatrix <- TermDocumentMatrix(c.likes) 
+
+c.likesmatrix <- as.matrix(c.likesdocmatrix)
+
+c.likesmatrix <- sort(rowSums(c.likesmatrix), decreasing = TRUE)
+
+c.likes.df <- data.frame(word = names(c.likesmatrix), freq = c.likesmatrix)
+
+# Cleaning data.
+
+c.likes <- tm_map(c.likes, removeWords, stopwords('english'))
+
+c.likes <- tm_map(c.likes, removePunctuation)
+
+c.likesdocmatrix <- TermDocumentMatrix(c.likes)
+
+c.likesmatrix <- as.matrix(c.likesdocmatrix)
+
+c.likesmatrix <- sort(rowSums(c.likesmatrix), decreasing = TRUE)
+
+c.likes.df <- data.frame(word = names(c.likesmatrix), freq = c.likesmatrix)
+
+# Creating cloud.
+
+wordcloud(c.likes.df$word, freq = c.likes.df$freq, max.words = 100, 
+          random.order = FALSE, colors = color)
+
+# Problem 4
+
+# Create a word cloud with the ANES 2016 open ended question about what respondents 
+# DISLIKE about Hilary Clinton. 
+
+clintondislikes <- read.csv("redacted_clinton_2016_dislikes.csv") # Pulling clinton dislikes into a dataframe.
+
+c.dislikes <- Corpus(VectorSource(clintondislikes$V161072...PRE..What.is.it.that.R.dislikes.about.Democratic.Pres.cand))
+
+c.dislikesdocmatrix <- TermDocumentMatrix(c.dislikes) 
+
+c.dislikesmatrix <- as.matrix(c.dislikesdocmatrix)
+
+c.dislikesmatrix <- sort(rowSums(c.dislikesmatrix), decreasing = TRUE)
+
+c.dislikes.df <- data.frame(word = names(c.dislikesmatrix), freq = c.dislikesmatrix)
+
+# Cleaning data.
+
+c.dislikes <- tm_map(c.dislikes, removeWords, stopwords('english'))
+
+c.dislikes <- tm_map(c.dislikes, removePunctuation)
+
+c.dislikesdocmatrix <- TermDocumentMatrix(c.dislikes)
+
+c.dislikesmatrix <- as.matrix(c.dislikesdocmatrix)
+
+c.dislikesmatrix <- sort(rowSums(c.dislikesmatrix), decreasing = TRUE)
+
+c.dislikes.df <- data.frame(word = names(c.dislikesmatrix), freq = c.dislikesmatrix)
+
+# Creating cloud.
+
+wordcloud(c.dislikes.df$word, freq = c.likes.df$freq, max.words = 100, 
+          random.order = FALSE, colors = color)
+
+# Analysis Questions
+
+# 1. Compare the "like" word clouds for Trump and Obama (from lecture.) Are there similarities/differences? 
+# What conclusions do you draw?
+
+# The first thing that I noticed when it came to what people liked about Obama was that people 
+# appear to like him for different reasons. This conclusion was drawn from the fact that there are a much more diverse
+# distribution of what positive words were used, with the theme appearing to be rooted in what respondents saw
+# as altruistic characteristics (e.g. words like change, better, care, ideas, help). On Trump's end, the likes appeared
+# to be rooted less in his political qualifications, as the most commonly referenced word was 'business'.
+# I would also add that although 'politician' appears fairly often, I think it actually referencing that he is no one
+# Additionally, unlike Obama vs his opposition, it appears that respondents like Trump chiefly because he wasn't Hillary Clinton,
+# which is indicated by the popularity of both 'hillary' and 'clinton'.
+
+# 2. Compare the word clouds for Donald Trump and Hilary Clinton. Comment on your findings. 
+
+# It is clear that respondents on Hillary's end trust her track record above all else. The preponderance of 
+# the word 'experience' far outweighed just about every other word, with the next pertinent word being 'trump'.
+# Though she would have been the first female president, I found it interesting that that and other identity-related elements
+# doesn't appear to be a reason people liked her for president.
+
+# Another interesting finding here was that the very things that respondents liked about Hillary is what they disliked
+# about Trump. Experience, which played well for Hillary, was included in one of respondents' dislikes about Trump.
+# The same was true when it came to elements of Hillary's identity (words like 'women'). I also noticed that 
+# dislikes about Hillary had more to do with her experience as well, as the general sentiment was that she cannot
+# be trusted, which is arguably a symptom of being a long term political operators. For Trump, since he has no track
+# record, the dislikes focused on assumptions how he carries himself (e.g., 'seems', racist', 'personality', 'attitude')
+
+# These differences paint a broad, yet clear picture of the dichotomy between republicans and democrats in 2016--a 
+# separation that appears to exist to this day.
