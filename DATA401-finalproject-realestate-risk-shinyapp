@@ -1,0 +1,111 @@
+## Adefoluke Shemsu
+## Week 8 Final Assignment
+
+# setwd("~/Documents/Education/Penn/Classes/DATA 401/Week 8") # Setting directory.
+
+# Establishing libraries.
+
+library(shinythemes)
+library(shiny)
+library(rsconnect)
+library(mfx)
+library(ggplot2)
+library(survey)
+library(foreign)
+library(ggplot2)
+library(stargazer)
+library(rgdal)
+library(plyr)
+library(leaflet)
+library(dplyr)
+
+# Reading risk data in to plug into the app.
+
+risk.data <- read.csv("place_data.csv")
+
+# Housing data in a default space so I can experiment with the risk.data set.
+
+ogdata <- risk.data
+
+# No weights in this data, so I shouldn't need svydesign.
+
+# Putting the regression function together.
+
+server <- function(input, output) {
+  reg.risk <- reactive({
+    as.formula(paste("Risk", " ~ ", paste(input$iv1, collapse = "+")))
+  })
+  
+  model <- reactive({
+    lm(formula = reg.risk(), data = risk.data)
+  })
+  
+  output$regTab <- renderText({
+    stargazer(model(), type = "html", dep.var.labels = "Risk Prediction")
+  })
+  
+}
+
+# Building the UI.
+
+ui <- shinyUI(fluidPage(theme = shinytheme("darkly"), 
+                        navbarPage("Philly Risk Calculator",
+                                   tabPanel("About",
+                                            tags$head(
+                                              tags$style("h2 {color: #04B4AE; }
+                                               h1 {color: #04B4AE}; }
+                                               ")),
+                                            headerPanel("Background & Instructions"),
+                                            br(),
+                                            h2("Background"),
+                                            h4(tags$ul(
+                                              tags$li("What factors influence a child's safety in a particular area? We at Living+ (backed by Brookhaven Capital) believe we've figured that out."),
+                                              tags$li("Using a proprietary regression model, we've developed a number of variables that can be input to paint a clear image of where your clientele can live a life optimized for their family's safety."),
+                                              tags$li("While the alpha is only available in Philly at this time, we intend to run this beta in Boston, NYC, DC, and Baltimore soon. Keep that in mind as you integrate our regression model with your real estate software for the end user.")
+                                              )),
+                                   h2("The Data"),
+                                   h4("This app uses data from the Philadelphia Children's Health and Wellbeing report. The report provided our independent variables, each ranked based on its respective risk range, and aggregated by us to provide a nuanced risk assessment of each part of the city."),
+                                   h2("Methodology"),
+                                   h4("This app uses logistic regression to determine the probability of specific region in the city being unsafe or lacking in educational opportunities for young people."),
+                                   h2("How to Use the Calculator"),
+                                   h4("To use the calculator, select \"Philly Area Risk Analysis\" on the navigation bar. You will be asked to select a 'Risk Factor' from our list of variables in order to build the regression model. Once you have selected your independent variables, the model will populate with the probability that the variable influences the safety of a particular area in your visualization tool."
+                                               )),
+                        tabPanel("Philly Area Risk Analysis",
+                                          tags$head(
+                                            tags$style("h2 {color: #04B4AE; }
+                                               h1 {color: #04B4AE}; }
+                                               ")),
+                                 headerPanel("Living+ Philadelphia Risk Model"),
+                                 sidebarLayout(position = "right",
+                                               sidebarPanel(
+                                                 h2("Risk Factors"),
+                                                 br(),
+                                                 checkboxGroupInput(
+                                                   "iv1",
+                                                   label = "Select any of the boxes below to see how these independent variables impact risk.",
+                                                   c("Risk Index" = "Risk",
+                                                     "Rate of Poverty" = "Poverty", 
+                                                     "Education Level" = "Education", 
+                                                     "Unemployment Rate" = "Unemployment",
+                                                     "Crime Rate" = "Crime",
+                                                     "Adverse Childhood Experiences Rate" = "ACEs"),
+                                                   selected = "Risk"
+                                                 )
+                                               ),
+                                               mainPanel(br(),
+                                                             h3("Risk Regression Coefficients"),
+                                                             HTML('</br>'),
+                                                             tableOutput("regTab"),
+                                                             HTML('</br>'),
+                                                             helpText("This model enables us to analyze area risk(s) based on which independent variables are selected.")
+                                                           
+                                                         )
+                                               )
+                                 )
+) 
+)
+)
+
+# Merging onto my app.
+
+shinyApp(ui = ui, server = server)
