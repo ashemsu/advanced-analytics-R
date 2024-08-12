@@ -1,0 +1,89 @@
+## Adefoluke Shemsu
+## Week 3 Assignment
+
+setwd("~/Documents/Education/Penn/Classes/DATA 401/Week 3")
+
+# Establishing libraries.
+
+library(shinythemes)
+library(shiny)
+library(rsconnect)
+library(mfx)
+library(ggplot2)
+library(survey)
+library(foreign)
+library(ggplot2)
+library(stargazer)
+library(rgdal)
+library(plyr)
+library(leaflet)
+library(dplyr)
+
+# Reading risk data in to plug into the app.
+
+risk.data <- read.csv("place_data.csv")
+
+# Housing data in a default space so I can experiment with the risk.data set.
+
+ogdata <- risk.data
+
+# No weights in this data, so I shouldn't need svydesign.
+
+# Putting the regression function together.
+
+server <- function(input, output) {
+  reg.risk <- reactive({
+    as.formula(paste("Risk", " ~ ", paste(input$iv1, collapse = "+")))
+  })
+
+  model <- reactive({
+    lm(formula = reg.risk(), data = risk.data)
+  })
+  
+  output$regTab <- renderText({
+    stargazer(model(), type = "html", dep.var.labels = "Risk Prediction")
+  })
+  
+}
+
+# Building the UI.
+
+ui <- shinyUI(fluidPage(tabPanel("Risk Prediction",
+  headerPanel("Philadelphia Risk Regression Model"),
+  sidebarLayout(position = "right",
+    sidebarPanel(
+      h2("Contributing Factors"),
+      br(),
+      checkboxGroupInput(
+        "iv1",
+        label = "Select any of the boxes below to see how these independent variables impact risk.",
+        c("Risk Index" = "Risk",
+          "Rate of Poverty" = "Poverty", 
+          "Education Level" = "Education", 
+          "Unemployment Rate" = "Unemployment",
+          "Crime Rate" = "Crime",
+          "Adverse Childhood Experiences Rate" = "ACEs"),
+        selected = "Risk"
+      )
+    ),
+    mainPanel(br(),
+              tabsetPanel(
+                type = "tabs",
+                tabPanel(
+                  "Risk Regression Table",
+                  h3("Risk Regression Coefficients"),
+                  HTML('</br>'),
+                  tableOutput("regTab"),
+                  HTML('</br>'),
+                  helpText("This model enables us to analyze area risk(s) based on a number of independent variables.")
+                )
+              )
+    )
+  ) 
+) 
+)
+)
+
+# Merging onto my app.
+
+shinyApp(ui = ui, server = server)
