@@ -1,0 +1,130 @@
+## Adefoluke Shemsu
+## Week 7 Assignment
+
+# We will use occupational employment statistics data. The file is somewhat large (N > 430,000).
+# For details, see http://www.bls.gov/oes/current/oes_stru.htm.
+
+setwd("~/Documents/Education/Penn/Classes/DATA 401/Week 7") # Setting directory.
+
+library(sqldf)
+library(tidyverse)
+
+# Peek at the first few rows of the dataset: 
+
+read.table("oesm.csv", sep = ";", header = TRUE, fill = TRUE, nrows = 10)
+
+# 1. Begin SQL processing by creating a new database called 'conemp'
+# Then add a table called 'oesm' (A best practice here is to use an
+# if statement to delete a table called 'oesm' if one already exists.)
+
+{
+conemp <- dbConnect(SQLite(), dbname = "oesm.db")
+  
+  if (dbExistsTable(conemp, "oesm"))
+    dbRemoveTable(conemp, "oesm")
+  
+  
+  dbWriteTable(
+    conemp,
+    "oesm",
+    "oesm.csv",
+    sep = ";",
+    header = TRUE,
+    row.names = FALSE
+  ) 
+  dbDisconnect(conemp)
+} # Creating db.
+
+# 2. Display the first 10 rows of all of the data in your table.
+
+conemp.db <- dbConnect(SQLite(), dbname = "oesm.db") # Establishing db connection in order to run query. 
+
+conemp.q <- dbSendQuery(conemp.db, " 
+                   SELECT *
+                   FROM oesm") # Running db query ('.q' = query for future reference).
+
+fetch(conemp.q, n = 10)
+dbClearResult(conemp.q)
+
+# 3. Select a subset of columns, 'occtitle', 'h_mean', 'area_title' for 
+# all of the observations where the grouping variable is 'major.'
+
+major.q <- dbSendQuery(conemp.db, " 
+                   SELECT occtitle, h_mean, area_title
+                   FROM oesm
+            WHERE (grouping == 'major')") # Selecting subset.
+
+fetch(major.q, n = 15) # Testing query.
+dbClearResult(major.q)
+
+# 4. Display all of the unique values of the variable 'naics'
+
+uniqval.q <- dbSendQuery(conemp.db, " 
+                   SELECT DISTINCT naics
+                   FROM oesm") # Displaying values.
+
+fetch(uniqval.q, n = 15) # Testing query.
+dbClearResult(uniqval.q)
+
+# 5. Count all of the observations for each year in the dataset.
+
+cntobs.q <- dbSendQuery(conemp.db, " 
+                   SELECT year, COUNT(*)
+                   FROM oesm
+                        GROUP BY year") # Counting observations.
+
+fetch(cntobs.q, n = 15) # Testing query.
+dbClearResult(cntobs.q)
+
+# 6. Find minimum and maximum of median annual salary (a_mean) for
+# each year
+
+minmax.q <- dbSendQuery(conemp.db, " 
+                   SELECT MIN(a_mean)
+                   FROM oesm
+                        GROUP BY year") # Finding min.
+
+fetch(minmax.q, n = -1) # Testing query.
+dbClearResult(minmax.q)
+
+#######################
+
+minmax2.q <- dbSendQuery(conemp.db, " 
+                   SELECT MAX([a_mean])
+                   FROM oesm
+                   WHERE ([a_mean] IS NOT 'NA')
+                   GROUP BY year") # Finding max.
+
+fetch(minmax2.q, n = -1) # Testing query.
+dbClearResult(minmax2.q)
+
+# 7. Create a new table from the same database that includes
+# the unique values of occcode and occtitle
+
+if(dbExistsTable(conemp.db, "uniqtab")) dbRemoveTable(conemp.db, "uniqtab")
+
+uniqtab.q <- dbSendQuery(conemp.db, " 
+                   CREATE TABLE uniqtab AS
+                   SELECT DISTINCT occcode,occtitle
+                   FROM oesm
+                         ")
+dbClearResult(uniqtab.q)
+
+# 8. Using your new SQL skills, pull some information from either table
+# and create a visualization (of any kind) with your extracted data. In 
+# one or two sentences, briefly comment on your visual. 
+
+viz <- dbSendQuery(conemp.db, " 
+                   SELECT occtitle, a_mean
+                   FROM oesm
+                   WHERE (grouping == 'major')")
+
+viz <- fetch(viz, n = 33756) # Turning 'major' subset into df to plot.
+
+ggplot(viz, 
+       aes(x = a_mean, y = occtitle)) + # Creating plot.
+  geom_point()+
+  xlab("Median Annual Salary")+
+  ylab("OCC Title")
+
+# This visualization aggregates then compares the range of median annual salaries for each occuputation title.
