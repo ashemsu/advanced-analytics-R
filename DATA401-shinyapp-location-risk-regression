@@ -1,0 +1,70 @@
+## Adefoluke Shemsu
+## Week 4 Assignment
+
+setwd("~/Documents/Education/Penn/Classes/DATA 401/Week 4")
+
+# Establishing libraries.
+
+library(shinythemes)
+library(shiny)
+library(rsconnect)
+library(mfx)
+library(ggplot2)
+library(survey)
+library(foreign)
+library(ggplot2)
+library(stargazer)
+library(rgdal)
+library(plyr)
+library(leaflet)
+library(dplyr)
+library(rsconnect)
+library(tidyverse)
+
+# Reading risk data in to plug into the app.
+
+risk.data <- read.csv("place_data.csv")
+
+# Putting the server function together.
+
+server <- function(input, output) {
+  riskdat <- reactive({
+    risk <- risk.data[risk.data$CODE == input$CODE1 | risk.data$CODE == risk.data$CODE2,]
+    risk <- pivot_longer(risk, cols = c("Risk", "Poverty", "Education", "Unemployment", "Crime", "ACEs"),
+                         names_to = "value", values_to = "series")
+  }) 
+
+# Creating visualization.
+
+  output$plot <- renderPlot({
+    ggplot(riskdat(), aes(CODE, series)) +
+      geom_col(aes(fill = CODE), show.legend = TRUE) +
+      facet_wrap( ~value, ncol = 3)
+  })
+  
+}
+
+# Building the UI.
+
+ui <- fluidPage("Analyzing Risk in Philadelphia",
+                headerPanel("Compare Risk Index Factors Across Zip Codes"),
+                sidebarLayout(position = "left",
+                              sidebarPanel(br(),
+                                           selectInput("CODE1",
+                                                       "Zip Code of Interest:",
+                                                       risk.data$CODE),
+                              ), 
+                              sidebarPanel(br(),
+                                           selectInput("CODE2",
+                                                       "Benchmark Zip Code:",
+                                                       risk.data$CODE),
+                              ), 
+                ), 
+                mainPanel(br(),
+                          plotOutput("plot")
+                )
+) 
+
+# Merging onto my app.
+
+shinyApp(ui = ui, server = server)
